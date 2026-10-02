@@ -1,0 +1,675 @@
+<title>Aculapatxi Operaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* Layout: fixed top app bar (brand + role tabs) over a single scroll column of role-specific panels, built from stacked cards on a grid that collapses to one column under 720px. */
+  :root{
+    --bg:#f3efe9; --surface:#ffffff; --surface-2:#faf7f2; --border:#e3dcd0;
+    --fg:#241b17; --fg-muted:#746a60; --fg-faint:#a79c8f;
+    --accent:#7f2634; --accent-ink:#ffffff; --accent-soft:#f6e4e3;
+    --ok:#2f7d4f; --ok-soft:#e3f1e5; --warn:#a9680a; --warn-soft:#faedd6;
+    --danger:#b23a2e; --danger-soft:#fbe6e1; --info:#39607d; --info-soft:#e4edf3;
+    --font-display:'Archivo',system-ui,sans-serif; --font-body:'Source Sans 3',system-ui,sans-serif; --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17120f; --surface:#211a16; --surface-2:#271f1a; --border:#3a2f28;
+      --fg:#f3ebe3; --fg-muted:#b7a99c; --fg-faint:#80736a;
+      --accent:#e0707e; --accent-ink:#2a0a0e; --accent-soft:#3a1c20;
+      --ok:#6fc991; --ok-soft:#1c3324; --warn:#e3ab57; --warn-soft:#3a2c14;
+      --danger:#ef8b7c; --danger-soft:#3d211c; --info:#8db3cf; --info-soft:#1d2d38;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17120f; --surface:#211a16; --surface-2:#271f1a; --border:#3a2f28;
+    --fg:#f3ebe3; --fg-muted:#b7a99c; --fg-faint:#80736a;
+    --accent:#e0707e; --accent-ink:#2a0a0e; --accent-soft:#3a1c20;
+    --ok:#6fc991; --ok-soft:#1c3324; --warn:#e3ab57; --warn-soft:#3a2c14;
+    --danger:#ef8b7c; --danger-soft:#3d211c; --info:#8db3cf; --info-soft:#1d2d38;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45}
+  h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+  .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  button{font:inherit}
+  a{color:inherit}
+
+  .app{display:flex;flex-direction:column;min-height:100dvh}
+
+  /* --- Top bar --- */
+  .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+  .topbar-inner{max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:17px;letter-spacing:.02em;white-space:nowrap}
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none}
+  .brand small{display:block;font-family:var(--font-body);font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-muted)}
+  .demo-badge{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);background:var(--warn-soft);border:1px solid color-mix(in srgb, var(--warn) 35%, transparent);padding:3px 8px;border-radius:999px;white-space:nowrap}
+
+  .roletabs{display:flex;gap:4px;margin-left:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:4px;overflow-x:auto;max-width:100%}
+  .roletab{appearance:none;border:0;background:transparent;color:var(--fg-muted);padding:8px 14px;border-radius:8px;font-weight:600;font-size:13.5px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+  .roletab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+  .roletab:hover:not([aria-selected="true"]){background:var(--border)}
+
+  main{flex:1;max-width:1180px;margin:0 auto;padding:22px 20px 60px;width:100%}
+
+  .role-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .role-head h1{font-size:22px}
+  .role-head p{margin:4px 0 0;color:var(--fg-muted);font-size:13.5px;max-width:60ch}
+  .subswitch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-muted)}
+  .subswitch select{font:inherit;background:var(--surface);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+
+  .grid{display:grid;gap:14px}
+  .grid-2{grid-template-columns:1.1fr .9fr}
+  .grid-3{grid-template-columns:repeat(3,1fr)}
+  @media (max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:0}
+  .card h2{font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .card h2 .count{font-family:var(--font-mono);font-size:11.5px;color:var(--fg-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:1px 7px}
+  .card-sub{color:var(--fg-muted);font-size:12.5px;margin:2px 0 14px}
+
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .stat .n{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1}
+  .stat .l{font-size:11.5px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:6px;font-weight:600}
+
+  /* --- Case card --- */
+  .case{border:1px solid var(--border);border-radius:11px;padding:12px 13px;background:var(--surface-2);display:flex;flex-direction:column;gap:8px}
+  .case + .case{margin-top:10px}
+  .case-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .case-folio{font-family:var(--font-mono);font-size:12px;color:var(--fg-muted)}
+  .case-title{font-weight:700;font-size:14.5px;margin-top:2px}
+  .case-meta{font-size:12.5px;color:var(--fg-muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+  .case-route{font-size:12.5px;color:var(--fg);display:flex;gap:6px;align-items:baseline;min-width:0}
+  .case-route b{font-weight:600}
+  .case-route .seg{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .case-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;letter-spacing:.01em}
+  .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .pill-solicitado{background:var(--info-soft);color:var(--info)}
+  .pill-aprobado{background:var(--ok-soft);color:var(--ok)}
+  .pill-asignado{background:var(--warn-soft);color:var(--warn)}
+  .pill-camino,.pill-sitio,.pill-traslado{background:var(--warn-soft);color:var(--warn)}
+  .pill-entregado{background:var(--ok-soft);color:var(--ok)}
+  .pill-cerrado{background:var(--surface);color:var(--fg-muted);border:1px solid var(--border)}
+  .pill-rechazado,.pill-cancelado{background:var(--danger-soft);color:var(--danger)}
+
+  .btn{appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--fg);padding:7px 12px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;transition:border-color .15s, background .15s}
+  .btn:hover{border-color:var(--fg-faint)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .btn-primary:hover{opacity:.92}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--fg-muted)}
+  .btn-ghost:hover{color:var(--fg);background:var(--surface-2)}
+  .btn-danger{color:var(--danger);border-color:color-mix(in srgb, var(--danger) 40%, transparent)}
+  .btn[disabled]{opacity:.4;cursor:not-allowed}
+
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0}
+  .field label{font-size:12px;font-weight:600;color:var(--fg-muted)}
+  .field input,.field select,.field textarea{font:inherit;font-size:13.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 10px;color:var(--fg);width:100%}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:64px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:520px){.row2{grid-template-columns:1fr}}
+
+  .empty{color:var(--fg-faint);font-size:13px;padding:18px 6px;text-align:center;border:1px dashed var(--border);border-radius:10px}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(10px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .log{display:flex;flex-direction:column;gap:9px;max-height:360px;overflow:auto;padding-right:2px}
+  .log-row{display:flex;gap:9px;font-size:12.5px}
+  .log-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:6px;flex:none}
+  .log-time{font-family:var(--font-mono);color:var(--fg-faint);font-size:11px;white-space:nowrap}
+  .log-text b{font-weight:700}
+  .log-text{color:var(--fg)}
+  .log-actor{color:var(--fg-muted)}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-muted);font-weight:700;padding:0 10px 8px;border-bottom:1px solid var(--border)}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  .table-wrap{overflow-x:auto}
+
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .bar-row{display:grid;grid-template-columns:120px 1fr 28px;align-items:center;gap:10px;font-size:12.5px}
+  .bar-track{height:9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}
+  .bar-fill{height:100%;background:var(--accent);border-radius:999px}
+  .bar-n{font-family:var(--font-mono);text-align:right;color:var(--fg-muted)}
+
+  .catalog-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .catalog-item:last-child{border-bottom:0}
+  .catalog-item .tag{font-family:var(--font-mono);font-size:11.5px;color:var(--fg-muted)}
+
+  .thumbrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .thumb{width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border)}
+
+  footer{padding:18px 20px 32px;text-align:center;color:var(--fg-faint);font-size:11.5px}
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark">AX</span><span>ACULAPATXI<small>Panel de operaciones</small></span></div>
+      <span class="demo-badge">Datos de ejemplo · Demo</span>
+      <nav class="roletabs" id="roletabs" role="tablist" aria-label="Rol"></nav>
+    </div>
+  </div>
+  <main id="view"></main>
+  <footer>Prototipo de alcance MVP — Anexo A del contrato. Sin backend: los datos viven solo en este navegador.</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var STORE_KEY = "aculapatxi-demo-v1";
+
+  var ESTADOS = {
+    solicitado:{label:"Solicitado",pill:"pill-solicitado"},
+    aprobado:{label:"Aprobado",pill:"pill-aprobado"},
+    rechazado:{label:"Rechazado",pill:"pill-rechazado"},
+    asignado:{label:"Asignado",pill:"pill-asignado"},
+    en_camino:{label:"En camino",pill:"pill-camino"},
+    en_sitio:{label:"En sitio",pill:"pill-sitio"},
+    trasladando:{label:"Trasladando",pill:"pill-traslado"},
+    entregado:{label:"Entregado",pill:"pill-entregado"},
+    cerrado:{label:"Cerrado",pill:"pill-cerrado"},
+    cancelado:{label:"Cancelado",pill:"pill-cancelado"}
+  };
+
+  var TIPOS_GRUA = [
+    {id:"A", nombre:"Grúa Tipo A", kmTarifa:23, banderazo:735, nota:"Autos ligeros"},
+    {id:"B", nombre:"Grúa Tipo B", kmTarifa:27, banderazo:820, nota:"Camionetas"},
+    {id:"C", nombre:"Grúa Tipo C", kmTarifa:32, banderazo:930, nota:"Carga media"},
+    {id:"D", nombre:"Grúa Tipo D", kmTarifa:40, banderazo:1800, nota:"Plataforma / carga pesada"}
+  ];
+
+  var ZONAS = ["CDMX","Estado de México","Morelos"];
+
+  var ASEGURADORAS = ["ANA Seguros","Banorte Seguros","GNP","Sura Vial"];
+
+  var OPERADORES = [
+    {id:"op1", nombre:"Jorge Medina"},
+    {id:"op2", nombre:"Lucía Torres"},
+    {id:"op3", nombre:"Ramón Ibarra"},
+    {id:"op4", nombre:"Patricia Luna"}
+  ];
+
+  var CLIENTES = [
+    {id:"cl1", nombre:"Miguel Ángel Paredes"},
+    {id:"cl2", nombre:"Sandra Ríos"},
+    {id:"cl3", nombre:"David Fuentes"}
+  ];
+
+  var USERS = [
+    {id:"u1", nombre:"Mario Ramírez", rol:"admin"},
+    {id:"u2", nombre:"Elvira Reina", rol:"despacho"},
+    {id:"u3", nombre:"Jorge Medina", rol:"operador"},
+    {id:"u4", nombre:"Lucía Torres", rol:"operador"}
+  ];
+
+  function uid(prefix){ return prefix + "_" + Math.random().toString(36).slice(2,9); }
+  function folio(n){ return "AC-" + String(24800 + n); }
+  function now(){ return Date.now(); }
+  function minsAgo(m){ return Date.now() - m*60000; }
+
+  function fmtWhen(ts){
+    var diff = Math.max(0, Date.now() - ts);
+    var mins = Math.round(diff/60000);
+    if (mins < 1) return "ahora";
+    if (mins < 60) return mins + " min";
+    var hrs = Math.round(mins/60);
+    if (hrs < 24) return hrs + " h";
+    return Math.round(hrs/24) + " d";
+  }
+
+  function seed(){
+    var cases = [
+      {id:uid("c"), n:1, cliente:"cl1", vehiculo:"Nissan March 2021, plata", desc:"Falla de motor, a pie de calle, 2 personas.",
+       origen:"Valle de Chalco, Méx.", destino:"Taller Multimarca, CDMX", aseguradora:"ANA Seguros", tipoGrua:"A",
+       estado:"solicitado", costo:null, operador:null, creado:minsAgo(18), fotos:0},
+      {id:uid("c"), n:2, cliente:"cl2", vehiculo:"Chevrolet Aveo 2020, café", desc:"Choque lateral, no enciende.",
+       origen:"Ejidos de Ayotla, Méx.", destino:"Paseos de Chalco, Méx.", aseguradora:"Banorte Seguros", tipoGrua:"A",
+       estado:"aprobado", costo:null, operador:null, creado:minsAgo(55), fotos:2},
+      {id:uid("c"), n:3, cliente:"cl3", vehiculo:"Freightliner M2, blanco", desc:"Varado en autopista, carga media.",
+       origen:"Autop. México–Puebla km 12", destino:"Corralón Iztapalapa, CDMX", aseguradora:"ANA Seguros", tipoGrua:"D",
+       estado:"asignado", costo:null, operador:"op1", creado:minsAgo(95), fotos:1},
+      {id:uid("c"), n:4, cliente:"cl1", vehiculo:"Dodge RAM 2021, blanco", desc:"Llantas giran, se pone en neutral.",
+       origen:"Nezahualcóyotl, Méx.", destino:"Sta. María Aztahuacán, CDMX", aseguradora:"Sura Vial", tipoGrua:"B",
+       estado:"en_camino", costo:null, operador:"op2", creado:minsAgo(130), fotos:0},
+      {id:uid("c"), n:5, cliente:"cl2", vehiculo:"Geely Sedán 2024, blanco", desc:"Entrega a taller autorizado.",
+       origen:"Cuernavaca, Mor.", destino:"Iztacalco, CDMX", aseguradora:"GNP", tipoGrua:"A",
+       estado:"trasladando", costo:3200, operador:"op3", creado:minsAgo(210), fotos:3},
+      {id:uid("c"), n:6, cliente:"cl3", vehiculo:"Nissan Versa 2016, azul", desc:"Servicio completado, en espera de cierre.",
+       origen:"Tláhuac, CDMX", destino:"San Miguel Teotongo, CDMX", aseguradora:"ANA Seguros", tipoGrua:"A",
+       estado:"entregado", costo:1954, operador:"op4", creado:minsAgo(340), fotos:4},
+      {id:uid("c"), n:7, cliente:"cl1", vehiculo:"Ford Figo 2016, blanco", desc:"Caso cerrado y facturado.",
+       origen:"Los Reyes Acaquilpan, Méx.", destino:"Ecatepec, Méx.", aseguradora:"Banorte Seguros", tipoGrua:"A",
+       estado:"cerrado", costo:2115, operador:"op1", creado:minsAgo(1400), fotos:3},
+      {id:uid("c"), n:8, cliente:"cl2", vehiculo:"Chargan Alsvin 2022, blanco", desc:"El cliente canceló antes de asignación.",
+       origen:"Vista Hermosa, Cuernavaca", destino:"—", aseguradora:"Sura Vial", tipoGrua:"A",
+       estado:"cancelado", costo:null, operador:null, creado:minsAgo(1600), fotos:0}
+    ];
+    var eventos = [];
+    cases.forEach(function(c){
+      eventos.push({id:uid("e"), caso:c.n, actor:"Cliente · " + nombreCliente(c.cliente), accion:"creó la solicitud", ts:c.creado});
+      if (c.estado !== "solicitado"){
+        eventos.push({id:uid("e"), caso:c.n, actor:"Aseguradora · " + c.aseguradora, accion: c.estado==="rechazado" ? "rechazó el caso" : "aprobó el caso", ts:c.creado+5*60000});
+      }
+      if (c.operador){
+        eventos.push({id:uid("e"), caso:c.n, actor:"Aseguradora · " + c.aseguradora, accion:"asignó a " + nombreOperador(c.operador), ts:c.creado+12*60000});
+      }
+      if (["en_camino","en_sitio","trasladando","entregado","cerrado"].indexOf(c.estado) !== -1){
+        eventos.push({id:uid("e"), caso:c.n, actor:"Operador · " + nombreOperador(c.operador), accion:"actualizó estado a " + ESTADOS[c.estado].label.toLowerCase(), ts:c.creado+20*60000});
+      }
+    });
+    eventos.sort(function(a,b){ return b.ts - a.ts; });
+    return {cases:cases, eventos:eventos, nextFolio:9, usuarios: USERS.slice()};
+  }
+
+  function nombreCliente(id){ var c = CLIENTES.filter(function(x){return x.id===id})[0]; return c ? c.nombre : "Cliente"; }
+  function nombreOperador(id){ var o = OPERADORES.filter(function(x){return x.id===id})[0]; return o ? o.nombre : "Sin asignar"; }
+  function tipoGrua(id){ return TIPOS_GRUA.filter(function(t){return t.id===id})[0]; }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw){ var parsed = JSON.parse(raw); if (parsed && parsed.cases && parsed.cases.length) return parsed; }
+    }catch(e){}
+    return seed();
+  }
+  function save(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }catch(e){}
+  }
+
+  var DB = load();
+
+  var UI = {
+    role: "cliente",
+    clienteId: "cl1",
+    operadorId: "op1",
+    toastTimer: null
+  };
+
+  function log(caso, actor, accion){
+    DB.eventos.unshift({id:uid("e"), caso:caso, actor:actor, accion:accion, ts:now()});
+    save();
+  }
+
+  function toast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(UI.toastTimer);
+    UI.toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function money(n){ return n==null ? "—" : "$" + Number(n).toLocaleString("es-MX") + " MXN"; }
+
+  function pill(estado){
+    var e = ESTADOS[estado];
+    return '<span class="pill ' + e.pill + '">' + e.label + '</span>';
+  }
+
+  /* ---------- Role tabs ---------- */
+  var ROLES = [
+    {id:"cliente", label:"Cliente"},
+    {id:"aseguradora", label:"Aseguradora"},
+    {id:"operador", label:"Operador"},
+    {id:"admin", label:"Administración"}
+  ];
+
+  function renderTabs(){
+    var el = document.getElementById("roletabs");
+    el.innerHTML = ROLES.map(function(r){
+      return '<button class="roletab" role="tab" aria-selected="'+(UI.role===r.id)+'" data-role="'+r.id+'">'+r.label+'</button>';
+    }).join("");
+  }
+
+  /* ---------- Views ---------- */
+
+  function viewCliente(){
+    var mine = DB.cases.filter(function(c){ return c.cliente === UI.clienteId; }).sort(function(a,b){return b.creado-a.creado;});
+    var activos = mine.filter(function(c){ return ["entregado","cerrado","rechazado","cancelado"].indexOf(c.estado)===-1; });
+    var historial = mine.filter(function(c){ return activos.indexOf(c)===-1; });
+
+    var html = '';
+    html += '<div class="role-head"><div><h1>Mis servicios</h1><p>Solicita una grúa, da seguimiento al estado y revisa tu historial.</p></div>'
+          + '<div class="subswitch">Viendo como <select id="clienteSelect">' + CLIENTES.map(function(c){ return '<option value="'+c.id+'" '+(c.id===UI.clienteId?"selected":"")+'>'+esc(c.nombre)+'</option>'; }).join("") + '</select></div></div>';
+
+    html += '<div class="grid grid-2">';
+
+    // Solicitar servicio
+    html += '<div class="card"><h2>Solicitar servicio</h2><p class="card-sub">Captura lo esencial primero; el resto se confirma después.</p>';
+    html += '<form id="formSolicitud">';
+    html += '<div class="field"><label for="f_ubic">¿Dónde estás?</label><input id="f_ubic" required placeholder="Ej. Av. Tláhuac 1200, CDMX"></div>';
+    html += '<div class="field"><label for="f_dest">Destino (si lo sabes)</label><input id="f_dest" placeholder="Ej. Taller Multimarca, Niños Héroes"></div>';
+    html += '<div class="row2"><div class="field"><label for="f_veh">Vehículo</label><input id="f_veh" required placeholder="Ej. Nissan March 2021, plata"></div>';
+    html += '<div class="field"><label for="f_grua">Tipo de grúa</label><select id="f_grua">' + TIPOS_GRUA.map(function(t){ return '<option value="'+t.id+'">'+t.nombre+' — '+t.nota+'</option>'; }).join("") + '</select></div></div>';
+    html += '<div class="field"><label for="f_desc">¿Qué pasó?</label><textarea id="f_desc" placeholder="Falla, choque, llantas giran, personas en el vehículo…"></textarea></div>';
+    html += '<div class="field"><label for="f_foto">Fotos del vehículo (opcional)</label><input id="f_foto" type="file" accept="image/*" multiple><div class="thumbrow" id="f_thumbs"></div></div>';
+    html += '<button class="btn btn-primary" type="submit">Enviar solicitud</button>';
+    html += '</form></div>';
+
+    // Estado actual
+    html += '<div class="card"><h2>Solicitudes activas <span class="count">'+activos.length+'</span></h2><p class="card-sub">Se actualizan cuando tu aseguradora u operador avanzan el caso.</p>';
+    html += activos.length ? activos.map(renderCaseCard.bind(null,"cliente")).join("") : '<div class="empty">No tienes solicitudes activas.</div>';
+    html += '</div>';
+
+    html += '</div>'; // grid
+
+    html += '<div class="card" style="margin-top:14px"><h2>Historial <span class="count">'+historial.length+'</span></h2>';
+    html += historial.length ? historial.map(renderCaseCard.bind(null,"cliente")).join("") : '<div class="empty">Aún no hay servicios en tu historial.</div>';
+    html += '</div>';
+
+    return html;
+  }
+
+  function renderCaseCard(ctx, c){
+    var t = tipoGrua(c.tipoGrua);
+    var actions = "";
+    if (ctx === "aseguradora"){
+      if (c.estado === "solicitado"){
+        actions = btn("Aprobar","aprobar",c.n,"btn-primary") + btn("Rechazar","rechazar",c.n,"btn-danger");
+      } else if (c.estado === "aprobado"){
+        actions = '<select data-assign="'+c.n+'" class="btn" style="padding:7px 10px"><option value="">Asignar operador…</option>'
+          + OPERADORES.map(function(o){ return '<option value="'+o.id+'">'+o.nombre+'</option>'; }).join("") + '</select>';
+      } else if (c.estado === "entregado"){
+        actions = '<input data-costo="'+c.n+'" class="btn" style="width:110px;cursor:text" placeholder="Costo MXN" value="'+(c.costo||"")+'">' + btn("Cerrar caso","cerrar",c.n,"btn-primary");
+      }
+    }
+    if (ctx === "operador"){
+      var flow = {asignado:"en_camino", en_camino:"en_sitio", en_sitio:"trasladando", trasladando:"entregado"};
+      var nextLabel = {en_camino:"Marcar en camino", en_sitio:"Marcar en sitio", trasladando:"Marcar trasladando", entregado:"Confirmar entrega"};
+      if (flow[c.estado]){
+        var nxt = flow[c.estado];
+        actions = btn(nextLabel[nxt], "avanzar", c.n, "btn-primary") + ' <input type="file" accept="image/*" data-evidencia="'+c.n+'" style="display:none" id="ev_'+c.n+'">'
+          + '<label for="ev_'+c.n+'" class="btn btn-ghost">Subir evidencia</label>'
+          + '<button class="btn btn-ghost" data-incidencia="'+c.n+'">Reportar incidencia</button>';
+      }
+    }
+    return '<div class="case" data-case="'+c.n+'">'
+      + '<div class="case-top"><div><div class="case-folio">'+folio(c.n)+' · hace '+fmtWhen(c.creado)+'</div>'
+      + '<div class="case-title">'+esc(c.vehiculo)+'</div></div>' + pill(c.estado) + '</div>'
+      + '<div class="case-route"><span class="seg">📍 '+esc(c.origen)+'</span>→<span class="seg">'+esc(c.destino)+'</span></div>'
+      + '<div class="case-meta"><span>'+t.nombre+'</span><span>'+esc(c.aseguradora)+'</span>'
+      + (c.operador ? '<span>Operador: '+nombreOperador(c.operador)+'</span>' : '')
+      + (c.costo!=null ? '<span>'+money(c.costo)+'</span>' : '')
+      + (c.fotos ? '<span>📷 '+c.fotos+'</span>' : '')
+      + '</div>'
+      + (c.desc ? '<div style="font-size:12.5px;color:var(--fg-muted)">'+esc(c.desc)+'</div>' : '')
+      + (actions ? '<div class="case-actions">'+actions+'</div>' : '')
+      + '</div>';
+  }
+
+  function btn(label, action, n, cls){
+    return '<button class="btn '+(cls||"")+'" data-action="'+action+'" data-case="'+n+'">'+label+'</button>';
+  }
+
+  function viewAseguradora(){
+    var bandeja = DB.cases.filter(function(c){ return c.estado==="solicitado" || c.estado==="aprobado"; });
+    var enCurso = DB.cases.filter(function(c){ return ["asignado","en_camino","en_sitio","trasladando"].indexOf(c.estado)!==-1; });
+    var porCerrar = DB.cases.filter(function(c){ return c.estado==="entregado"; });
+
+    var html = '<div class="role-head"><div><h1>Bandeja de aseguradora</h1><p>Revisa, aprueba, asigna operador y cierra los casos de tu cuenta.</p></div></div>';
+
+    html += '<div class="grid grid-3" style="margin-bottom:14px">'
+      + stat(bandeja.length,"Por revisar") + stat(enCurso.length,"En ejecución") + stat(porCerrar.length,"Por cerrar")
+      + '</div>';
+
+    html += '<div class="grid grid-2">';
+    html += '<div class="card"><h2>Solicitudes por revisar <span class="count">'+bandeja.length+'</span></h2>';
+    html += bandeja.length ? bandeja.map(renderCaseCard.bind(null,"aseguradora")).join("") : '<div class="empty">Sin solicitudes pendientes.</div>';
+    html += '</div>';
+
+    html += '<div class="card"><h2>En ejecución <span class="count">'+enCurso.length+'</span></h2>';
+    html += enCurso.length ? enCurso.map(renderCaseCard.bind(null,"aseguradora")).join("") : '<div class="empty">Ningún caso en campo ahora mismo.</div>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="card" style="margin-top:14px"><h2>Por cerrar y registrar costo <span class="count">'+porCerrar.length+'</span></h2>';
+    html += porCerrar.length ? porCerrar.map(renderCaseCard.bind(null,"aseguradora")).join("") : '<div class="empty">No hay casos entregados en espera de cierre.</div>';
+    html += '</div>';
+
+    return html;
+  }
+
+  function stat(n,label){
+    return '<div class="stat"><div class="n mono">'+n+'</div><div class="l">'+label+'</div></div>';
+  }
+
+  function viewOperador(){
+    var mios = DB.cases.filter(function(c){ return c.operador === UI.operadorId && ["asignado","en_camino","en_sitio","trasladando"].indexOf(c.estado)!==-1; });
+    var entregados = DB.cases.filter(function(c){ return c.operador === UI.operadorId && (c.estado==="entregado"||c.estado==="cerrado"); }).slice(0,5);
+
+    var html = '<div class="role-head"><div><h1>Mis casos en campo</h1><p>Actualiza el estado, sube evidencia y reporta incidencias.</p></div>'
+      + '<div class="subswitch">Viendo como <select id="operadorSelect">' + OPERADORES.map(function(o){ return '<option value="'+o.id+'" '+(o.id===UI.operadorId?"selected":"")+'>'+esc(o.nombre)+'</option>'; }).join("") + '</select></div></div>';
+
+    html += '<div class="card"><h2>Asignados a mí <span class="count">'+mios.length+'</span></h2>';
+    html += mios.length ? mios.map(renderCaseCard.bind(null,"operador")).join("") : '<div class="empty">No tienes casos activos en este momento.</div>';
+    html += '</div>';
+
+    html += '<div class="card" style="margin-top:14px"><h2>Completados recientes</h2>';
+    html += entregados.length ? entregados.map(renderCaseCard.bind(null,"operador")).join("") : '<div class="empty">Aún no completas servicios.</div>';
+    html += '</div>';
+
+    return html;
+  }
+
+  function viewAdmin(){
+    var counts = {};
+    Object.keys(ESTADOS).forEach(function(k){ counts[k]=0; });
+    DB.cases.forEach(function(c){ counts[c.estado]++; });
+    var total = DB.cases.length;
+    var activos = total - (counts.cerrado+counts.cancelado+counts.rechazado);
+
+    var html = '<div class="role-head"><div><h1>Panel de administración</h1><p>Usuarios, operación activa, catálogos y bitácora de auditoría.</p></div></div>';
+
+    html += '<div class="grid grid-3" style="margin-bottom:14px">'
+      + stat(total,"Servicios totales") + stat(activos,"Operación activa") + stat(DB.usuarios.length,"Usuarios con acceso")
+      + '</div>';
+
+    html += '<div class="grid grid-2">';
+
+    // usuarios
+    html += '<div class="card"><h2>Usuarios <span class="count">'+DB.usuarios.length+'</span></h2><p class="card-sub">Alta, baja y rol de cada persona con acceso al sistema.</p>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Rol</th><th></th></tr></thead><tbody id="tblUsuarios">';
+    html += DB.usuarios.map(function(u){
+      return '<tr><td>'+esc(u.nombre)+'</td><td style="text-transform:capitalize">'+esc(u.rol)+'</td>'
+        + '<td style="text-align:right"><button class="btn btn-ghost btn-danger" data-rmuser="'+u.id+'">Dar de baja</button></td></tr>';
+    }).join("");
+    html += '</tbody></table></div>';
+    html += '<form id="formUser" style="margin-top:12px" class="row2">'
+      + '<div class="field" style="margin-bottom:0"><label for="u_nombre">Nombre</label><input id="u_nombre" required placeholder="Nombre y apellido"></div>'
+      + '<div class="field" style="margin-bottom:0"><label for="u_rol">Rol</label><select id="u_rol"><option value="despacho">Despacho</option><option value="operador">Operador</option><option value="admin">Administrador</option></select></div>'
+      + '<div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Dar de alta</button></div></form>';
+    html += '</div>';
+
+    // reporte
+    html += '<div class="card"><h2>Servicios por estado</h2><p class="card-sub">Reporte operativo simple del periodo.</p>';
+    html += '<div class="bars">' + Object.keys(ESTADOS).map(function(k){
+      var n = counts[k]; var pct = total ? Math.round(n/total*100) : 0;
+      return '<div class="bar-row"><span>'+ESTADOS[k].label+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><span class="bar-n mono">'+n+'</span></div>';
+    }).join("") + '</div></div>';
+
+    html += '</div>'; // grid-2
+
+    html += '<div class="grid grid-2" style="margin-top:14px">';
+
+    // catalogos
+    html += '<div class="card"><h2>Catálogos</h2><p class="card-sub">Tipos de grúa y zonas de cobertura.</p>';
+    html += '<div style="margin-bottom:14px">' + TIPOS_GRUA.map(function(t){
+      return '<div class="catalog-item"><span>'+t.nombre+' <span style="color:var(--fg-muted)">· '+t.nota+'</span></span><span class="tag">$'+t.kmTarifa+'/km + $'+t.banderazo+'</span></div>';
+    }).join("") + '</div>';
+    html += '<div>' + ZONAS.map(function(z){ return '<div class="catalog-item"><span>'+z+'</span><span class="tag">activa</span></div>'; }).join("") + '</div>';
+    html += '</div>';
+
+    // bitacora
+    html += '<div class="card"><h2>Bitácora de auditoría</h2><p class="card-sub">Quién hizo qué y cuándo, por caso.</p>';
+    html += '<div class="log">' + DB.eventos.slice(0,30).map(function(e){
+      return '<div class="log-row"><span class="log-dot"></span><div class="log-text"><span class="log-time">'+fmtWhen(e.ts)+'</span> · '
+        + '<span class="log-actor">'+esc(e.actor)+'</span> '+esc(e.accion)+' en <b>'+folio(e.caso)+'</b></div></div>';
+    }).join("") + '</div></div>';
+
+    html += '</div>';
+
+    return html;
+  }
+
+  /* ---------- Render / events ---------- */
+
+  function render(){
+    renderTabs();
+    var v = document.getElementById("view");
+    if (UI.role==="cliente") v.innerHTML = viewCliente();
+    else if (UI.role==="aseguradora") v.innerHTML = viewAseguradora();
+    else if (UI.role==="operador") v.innerHTML = viewOperador();
+    else v.innerHTML = viewAdmin();
+  }
+
+  document.getElementById("roletabs").addEventListener("click", function(e){
+    var b = e.target.closest("[data-role]");
+    if (!b) return;
+    UI.role = b.getAttribute("data-role");
+    render();
+  });
+
+  document.getElementById("view").addEventListener("click", function(e){
+    var el = e.target;
+
+    var act = el.closest("[data-action]");
+    if (act){
+      var n = +act.getAttribute("data-case");
+      var c = DB.cases.filter(function(x){return x.n===n})[0];
+      if (!c) return;
+      var action = act.getAttribute("data-action");
+      if (action==="aprobar"){ c.estado="aprobado"; log(n,"Aseguradora · "+c.aseguradora,"aprobó el caso"); toast(folio(n)+" aprobado"); }
+      if (action==="rechazar"){ c.estado="rechazado"; log(n,"Aseguradora · "+c.aseguradora,"rechazó el caso"); toast(folio(n)+" rechazado"); }
+      if (action==="cerrar"){ c.estado="cerrado"; log(n,"Aseguradora · "+c.aseguradora,"cerró el caso"); toast(folio(n)+" cerrado"); }
+      if (action==="avanzar"){
+        var flow = {asignado:"en_camino", en_camino:"en_sitio", en_sitio:"trasladando", trasladando:"entregado"};
+        var nxt = flow[c.estado];
+        if (nxt){ c.estado = nxt; log(n,"Operador · "+nombreOperador(c.operador),"actualizó estado a "+ESTADOS[nxt].label.toLowerCase()); toast(folio(n)+" → "+ESTADOS[nxt].label); }
+      }
+      save(); render();
+      return;
+    }
+
+    var inc = el.closest("[data-incidencia]");
+    if (inc){
+      var n2 = +inc.getAttribute("data-incidencia");
+      var texto = prompt("Describe la incidencia:");
+      if (texto && texto.trim()){
+        var c2 = DB.cases.filter(function(x){return x.n===n2})[0];
+        log(n2, "Operador · "+nombreOperador(c2.operador), "reportó incidencia: “"+texto.trim()+"”");
+        save(); toast("Incidencia registrada en "+folio(n2));
+        if (UI.role==="admin") render();
+      }
+      return;
+    }
+
+    var rm = el.closest("[data-rmuser]");
+    if (rm){
+      var uidv = rm.getAttribute("data-rmuser");
+      DB.usuarios = DB.usuarios.filter(function(u){ return u.id!==uidv; });
+      save(); render(); toast("Usuario dado de baja");
+      return;
+    }
+  });
+
+  document.getElementById("view").addEventListener("change", function(e){
+    var sel = e.target.closest("[data-assign]");
+    if (sel && sel.value){
+      var n = +sel.getAttribute("data-assign");
+      var c = DB.cases.filter(function(x){return x.n===n})[0];
+      c.estado = "asignado"; c.operador = sel.value;
+      log(n, "Aseguradora · "+c.aseguradora, "asignó a "+nombreOperador(sel.value));
+      save(); render(); toast(folio(n)+" asignado a "+nombreOperador(sel.value));
+      return;
+    }
+
+    var costo = e.target.closest("[data-costo]");
+    if (costo){
+      var n2 = +costo.getAttribute("data-costo");
+      var c2 = DB.cases.filter(function(x){return x.n===n2})[0];
+      var val = parseFloat(costo.value.replace(/[^\d.]/g,""));
+      c2.costo = isNaN(val) ? null : val;
+      save();
+      return;
+    }
+
+    var ev = e.target.closest("[data-evidencia]");
+    if (ev && ev.files && ev.files[0]){
+      var n3 = +ev.getAttribute("data-evidencia");
+      var c3 = DB.cases.filter(function(x){return x.n===n3})[0];
+      c3.fotos = (c3.fotos||0) + 1;
+      log(n3, "Operador · "+nombreOperador(c3.operador), "subió evidencia fotográfica");
+      save(); toast("Evidencia agregada a "+folio(n3));
+      render();
+      return;
+    }
+
+    var cs = e.target.closest("#clienteSelect");
+    if (cs){ UI.clienteId = cs.value; render(); return; }
+
+    var os = e.target.closest("#operadorSelect");
+    if (os){ UI.operadorId = os.value; render(); return; }
+
+    var fotoInput = e.target.closest("#f_foto");
+    if (fotoInput){
+      var wrap = document.getElementById("f_thumbs");
+      wrap.innerHTML = "";
+      Array.prototype.slice.call(fotoInput.files).slice(0,4).forEach(function(file){
+        var reader = new FileReader();
+        reader.onload = function(ev){
+          var img = document.createElement("img");
+          img.className = "thumb"; img.src = ev.target.result;
+          wrap.appendChild(img);
+        };
+        try{ reader.readAsDataURL(file); }catch(err){}
+      });
+      return;
+    }
+  });
+
+  document.getElementById("view").addEventListener("submit", function(e){
+    if (e.target.id === "formSolicitud"){
+      e.preventDefault();
+      var ubic = document.getElementById("f_ubic").value.trim();
+      var dest = document.getElementById("f_dest").value.trim() || "Por confirmar";
+      var veh = document.getElementById("f_veh").value.trim();
+      var grua = document.getElementById("f_grua").value;
+      var desc = document.getElementById("f_desc").value.trim();
+      var fotos = (document.getElementById("f_foto").files||[]).length;
+      if (!ubic || !veh) return;
+      var n = DB.nextFolio++;
+      var c = {id:uid("c"), n:n, cliente:UI.clienteId, vehiculo:veh, desc:desc,
+        origen:ubic, destino:dest, aseguradora: ASEGURADORAS[Math.floor(Math.random()*ASEGURADORAS.length)],
+        tipoGrua:grua, estado:"solicitado", costo:null, operador:null, creado:now(), fotos:fotos};
+      DB.cases.unshift(c);
+      log(n, "Cliente · "+nombreCliente(UI.clienteId), "creó la solicitud");
+      save(); render();
+      toast("Solicitud "+folio(n)+" enviada");
+      return;
+    }
+    if (e.target.id === "formUser"){
+      e.preventDefault();
+      var nombre = document.getElementById("u_nombre").value.trim();
+      var rol = document.getElementById("u_rol").value;
+      if (!nombre) return;
+      DB.usuarios.push({id:uid("u"), nombre:nombre, rol:rol});
+      save(); render();
+      toast(nombre + " dado de alta");
+      return;
+    }
+  });
+
+  render();
+})();
+</script>
